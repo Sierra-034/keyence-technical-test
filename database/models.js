@@ -8,8 +8,7 @@ class Empleado {
 }
 
 class Asistencia {
-    constructor(idEmpleado, asistencia) {
-        this.idEmpleado = idEmpleado;
+    constructor(asistencia) {
         this.asistencia = asistencia;
         this.fecha = Date.now();
     }

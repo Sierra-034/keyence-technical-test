@@ -1,3 +1,7 @@
-const Empleados = new Map();
+const empleados = new Map();
+const asistencias = new Map();
 
-module.exports = Empleados;
+module.exports = {
+    empleados,
+    asistencias,
+};
