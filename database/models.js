@@ -10,7 +10,7 @@ class Empleado {
 class Asistencia {
     constructor(asistencia) {
         this.asistencia = asistencia;
-        this.fecha = Date.now();
+        this.fecha = new Date().toLocaleDateString();
     }
 }
 
