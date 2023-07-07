@@ -1,18 +1,40 @@
-const uuid = require('uuid')
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: 'database.sqlite'
+});
 
-class Empleado {
-    constructor(nombre) {
-        this.id = uuid.v4();
-        this.nombre = nombre
-    }
-}
+const Empleado = sequelize.define('Employee', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+    },
+    name: DataTypes.STRING,
+}, {
+    timestamps: false,
+});
 
-class Asistencia {
-    constructor(asistencia) {
-        this.asistencia = asistencia;
-        this.fecha = new Date().toLocaleDateString();
+const Asistencia = sequelize.define('Attendance', {
+    asistencia: DataTypes.BOOLEAN,
+    fecha: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+    },
+}, {
+    timestamps: false,
+});
+
+Empleado.hasMany(Asistencia, {
+    foreignKey: {
+        name: 'empleadoId',
+        type: DataTypes.UUIDV4,
     }
-}
+});
+
+(async () => {
+    await sequelize.sync();
+})();
 
 module.exports = {
     Empleado,

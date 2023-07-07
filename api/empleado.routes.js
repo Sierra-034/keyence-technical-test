@@ -1,55 +1,51 @@
 const express = require('express');
 const { Empleado } = require('../database/models');
-const { empleados } = require('../database/collections');
 const empleadoRouter = express.Router();
 
-empleadoRouter.get('/', (req, res) => {
-    const { idEmpleado } = req.query;
-    if (!idEmpleado) {
-        const empleadosJson = Object.fromEntries(empleados)
-        res.status(200).json(empleadosJson);
-    }
-    
-    const empleado = empleados.get(idEmpleado);
-    if (!empleado) {
-        res.status(404).send('Empleado no encontrado')
-        return
+empleadoRouter.get('/', async (req, res) => {
+    const { id } = req.query;
+    if (!id) {
+        const empleados = await Empleado.findAll(
+            {
+                attributes: {
+                    exclude: ['createdAt', 'updatedAt'],
+                }
+            });
+        res.status(200).json(empleados);
+        return;
     }
 
-    res.status(200).json(empleado);
+    const empleado = await Empleado.findByPk(id);
+    res.status(200).json(empleado.toJSON());
 });
 
-empleadoRouter.post('/', (req, res) => {
-    const { nombre } = req.body;
-    if (!empleados.get(nombre)) {
-        const empleadoModel = new Empleado(nombre);
-        empleados.set(empleadoModel.id, empleadoModel);
-        res.status(201).json(empleadoModel);
-        return
+empleadoRouter.post('/', async (req, res) => {
+    const { nombre: name } = req.body;
+    const isAlreadyCreated = await Empleado.findOne({where: {name}})
+    if (!isAlreadyCreated) {
+        const empleado = await Empleado.create({ name });
+        res.status(201).json(empleado.toJSON());
+        return;
     }
 
     res.status(400).send('Empleado ya existe');
 });
 
-empleadoRouter.put('/', (req, res) => {
-    const { id } = req.body;
-    const updatedEmpleado = empleados.get(id);
-    if (!updatedEmpleado) {
-        res.status(400).send('Empleado no encontrado')
-        return
-    }
+empleadoRouter.put('/', async (req, res) => {
+    const { id, nombre: newNombre } = req.body;
+    const updatedModels = await Empleado.update({name: newNombre}, {
+        where: { id }
+    });
 
-    const { nombre: newNombre } = req.body;
-    updatedEmpleado.nombre = newNombre;
-    res.status(200).json(updatedEmpleado);
+    res.status(200).send(`${updatedModels[0]} Empleados actualizados`);
 });
 
-empleadoRouter.delete('/', (req, res) => {
+empleadoRouter.delete('/', async (req, res) => {
     const { id } = req.query;
-    const eliminado = 
-        empleados.delete(id)
-        ? 'Eliminado' : 'No eliminado';
-    res.status(200).send(`Empleado ${eliminado}`);
+    const deletedEmpleados = await Empleado.destroy({
+        where: {id},
+    });
+    res.status(200).send(`${deletedEmpleados} Empleados eliminados`);
 });
 
 module.exports = empleadoRouter;
