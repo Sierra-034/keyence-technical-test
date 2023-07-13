@@ -1,47 +1,50 @@
 const express = require('express');
-const { Asistencia } = require('../database/models');
-const { asistencias } = require('../database/collections');
+const { Asistencia, Empleado } = require('../database/models');
 const asistenciaRouter = express.Router();
 
-asistenciaRouter.get('/', (req, res) => {
-    const { id } = req.query;
-    if (!asistencias.get(id)) {
+asistenciaRouter.get('/', async (req, res) => {
+    const { id: empleadoId } = req.query;
+    const empleadoExists = await Empleado.findByPk(empleadoId);
+    if (!empleadoExists) {
         res.status(400).send('Empleado no existe');
-        return
+        return;
     }
-    
-    const asistenciasList = asistencias.get(id);
+
+    const asistenciasList = await Asistencia.findAll({where: {
+        empleadoId}});
     res.status(200).json(asistenciasList);
 });
 
-asistenciaRouter.post('/', (req, res) => {
+asistenciaRouter.post('/', async (req, res) => {
     const { asistencia, id } = req.body;
-    if (!asistencias.get(id)) {
-        asistencias.set(id, new Array());
+    const fecha = new Date().toLocaleDateString();
+    const isAlreadyCreated = await Asistencia.findOne({
+        where: {fecha, id}});
+
+    if (!isAlreadyCreated) {
+        const newAttendance = await Asistencia.create({
+            asistencia, empleadoId: id, fecha });
+        res.status(201).json(newAttendance.toJSON());
+        return;
     }
 
-    const asistenciaModel = new Asistencia(asistencia);
-    let listaAsistencias = asistencias.get(id);
-    listaAsistencias.push(asistenciaModel);
-    res.status(201).send('Asistencia creada');
+    res.status(400).send('Asistencia ya fué creada');
 });
 
-asistenciaRouter.put('/', (req, res) => {
-    const { id, fecha, asistencia } = req.body;
-    let empleadoAsistencias = asistencias.get(id);
-    const callbackFn = (item) => item.fecha = fecha;
-    const index = empleadoAsistencias.findIndex(callbackFn);
-    empleadoAsistencias[index].asistencia = asistencia;
-    res.status(200).end();
+asistenciaRouter.put('/', async (req, res) => {
+    const { id: empleadoId, fecha, asistencia } = req.body;
+    const updatedAttendance = await Asistencia.update(
+        {asistencia}, {where: {empleadoId, fecha}});
+    
+    res.status(200).send(`${updatedAttendance} Asistencias modificadas`);
 });
 
-asistenciaRouter.delete('/', (req, res) => {
-    const { id, fecha } = req.body;
-    let empleadoAsistencias = asistencias.get(id);
-    const callbackFn = (item) => item.fecha = fecha;
-    const index = empleadoAsistencias.findIndex(callbackFn);
-    empleadoAsistencias.splice(index, 1);
-    res.status(200).end();
+asistenciaRouter.delete('/', async (req, res) => {
+    const { id: empleadoId, fecha } = req.body;
+    const deletedAttendances = await Asistencia.destroy({
+        where: {empleadoId, fecha}});
+    
+    res.status(200).send(`${deletedAttendances} Asistencias eliminadas`);    
 });
 
 module.exports = asistenciaRouter;
