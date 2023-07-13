@@ -17,10 +17,7 @@ const Empleado = sequelize.define('Employee', {
 
 const Asistencia = sequelize.define('Attendance', {
     asistencia: DataTypes.BOOLEAN,
-    fecha: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-    },
+    fecha: DataTypes.STRING,
 }, {
     timestamps: false,
 });
